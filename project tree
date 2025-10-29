@@ -1,0 +1,18 @@
+Vayuveer-Gas-Detection-System/
+│
+├── hardware/
+│   ├── circuit_diagram.png
+│   └── wiring_notes.txt
+│
+├── esp32/
+│   └── Vayuveer_ESP32_Code.ino
+│
+├── webapp/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+│
+├── ppt/
+│   └── Vayuveer_Presentation.pptx
+│
+└── README.md
