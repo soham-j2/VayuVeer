@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VayuVeer — Smart LPG Safety</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+  --bg:#0b0f1a;
+  --card:#0f1724;
+  --muted:#9aa6b2;
+  --accent1:linear-gradient(90deg,#ff9a00,#ffcc33);
+  --safe:#2dd4bf;
+  --danger:#ff5c5c;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  background:radial-gradient(1200px 600px at 10% 10%,rgba(255,153,0,0.03),transparent 10%),
+             radial-gradient(1000px 500px at 90% 90%,rgba(0,200,255,0.02),transparent 10%),
+             var(--bg);
+  color:#e6eef6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* HEADER */
+header{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  padding:14px 18px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  background:rgba(15,23,36,0.75);
+  backdrop-filter:blur(10px) saturate(180%);
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.brand{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.brand img{
+  width:48px;
+  height:48px;
+  object-fit:contain;
+  border-radius:10px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);
+  padding:6px;
+}
+.brand h1{font-size:18px;margin:0;}
+.brand p{margin:0;color:var(--muted);font-size:12px;}
+.top-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
+.status-pill{
+  background:linear-gradient(90deg,#0ea5a4,#06b6d4);
+  padding:6px 12px;border-radius:20px;color:#021118;font-weight:600;font-size:12px;
+}
+
+.container{max-width:1150px;margin:24px auto;padding:0 16px;}
+.card{
+  background:rgba(255,255,255,0.02);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 6px 22px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.04);
+}
+.top-cards{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
+.big .label{color:var(--muted);font-size:13px;}
+.big .value{font-size:36px;font-weight:700;}
+.badge{padding:6px 10px;border-radius:8px;font-weight:600;}
+.chart-wrap{height:300px;padding:8px;}
+canvas{width:100%!important;height:100%!important;}
+
+.safety h3{margin:0 0 10px 0;color:#ffd966;}
+.safety ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.6;}
+
+.contact{display:flex;justify-content:space-between;align-items:center;
+         padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted);}
+.contact a{color:#ffd966;text-decoration:none;font-weight:600;}
+
+input,button{
+  font-size:15px;
+  border-radius:8px;
+}
+input{padding:10px;border:none;background:#0b1220;color:#fff;width:140px;}
+button{padding:10px 14px;border:none;background:#ff9a00;color:#041014;font-weight:700;cursor:pointer;}
+
+footer{margin:30px auto 50px;color:var(--muted);text-align:center;font-size:13px;}
+
+@media (max-width:768px){
+  .big .value{font-size:28px;}
+  .chart-wrap{height:240px;}
+  header{flex-wrap:wrap;justify-content:center;text-align:center;}
+  .brand{justify-content:center;}
+  input{width:100%;}
+  button{width:100%;}
+  .top-cards{flex-direction:column;}
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="brand">
+    <!-- ✅ Replace logo.png with your actual logo -->
+    <img src="logo.png" alt="VayuVeer Logo" />
+    <div>
+      <h1>VayuVeer</h1>
+      <p>Smart LPG Safety System</p>
+    </div>
+  </div>
+  <div class="top-right">
+    <div>
+      <div style="font-size:12px;color:var(--muted)">System</div>
+      <div class="status-pill" id="systemActivePill">Active</div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="top-cards">
+    <div class="card" style="flex:1">
+      <div class="big">
+        <div class="label">Gas Level</div>
+        <div class="value" id="ppmValue">-- PPM</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap">
+          <div id="statusBadge" class="badge">Loading...</div>
+          <div style="color:var(--muted);font-size:13px">Last update: <span id="lastTime">--</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="flex:1">
+      <div style="font-weight:700;margin-bottom:8px">System Status</div>
+      <div id="systemStatus" style="font-size:20px;color:var(--safe)">Loading...</div>
+    </div>
+  </div>
+
+  <div class="card chart-wrap">
+    <div style="font-weight:700;margin-bottom:8px">Real-Time Monitoring</div>
+    <canvas id="liveChart"></canvas>
+  </div>
+
+  <!-- ✅ Threshold control moved below graph -->
+  <div class="card" style="margin-top:16px;">
+    <div style="font-weight:700;margin-bottom:8px">Threshold Settings</div>
+    <input id="thresholdInput" type="number" placeholder="Enter threshold (ADC)">
+    <button id="updateThresholdBtn">Update</button>
+    <div style="margin-top:10px;font-size:13px;color:var(--muted)">
+      Current threshold (ADC): <strong id="currentThreshold">--</strong>
+    </div>
+  </div>
+
+  <div class="card safety" style="margin-top:16px;">
+    <h3>⚠️ Safety Guidelines</h3>
+    <ul>
+      <li>Check rubber tubes for cracks or damage.</li>
+      <li>Keep kitchen well-ventilated.</li>
+      <li>Turn off regulator when not in use.</li>
+      <li>Never use flame to check for leaks.</li>
+      <li>Keep cylinder away from heat sources.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div style="font-weight:700;margin-bottom:8px">Emergency Contacts</div>
+    <div class="contact"><div>Fire Emergency</div><div>101</div></div>
+    <div class="contact"><div>LPG Helpline</div><div>1906</div></div>
+    <div class="contact"><div>Ministry of Petroleum</div><a href="https://mopng.gov.in" target="_blank">Visit →</a></div>
+  </div>
+</main>
+
+<footer>Made with ❤️ by Soham Jadhav | VayuVeer © 2025</footer>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDF63V2f63DPLJQ0ohCHfS69R3NJ-oPJGU",
+  authDomain: "vayuveerxe.firebaseapp.com",
+  databaseURL: "https://vayuveerxe-default-rtdb.firebaseio.com",
+  projectId: "vayuveerxe",
+  storageBucket: "vayuveerxe.firebasestorage.app",
+  messagingSenderId: "728814527085",
+  appId: "1:728814527085:web:79d4b51d02b77c43811564",
+  measurementId: "G-42E1GTYNMB"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const ppmValue = document.getElementById('ppmValue');
+const statusBadge = document.getElementById('statusBadge');
+const lastTime = document.getElementById('lastTime');
+const systemStatus = document.getElementById('systemStatus');
+const currentThresholdEl = document.getElementById('currentThreshold');
+const thresholdInput = document.getElementById('thresholdInput');
+const updateThresholdBtn = document.getElementById('updateThresholdBtn');
+
+// Chart setup
+const ctx = document.getElementById('liveChart').getContext('2d');
+const chartData = { labels: [], datasets: [{ label: 'PPM', data: [], borderColor: '#00e5a8', backgroundColor: 'rgba(0,229,168,0.08)', tension: 0.3, pointRadius:0 }] };
+const chart = new Chart(ctx, { type: 'line', data: chartData, options: { animation:false, scales:{ y:{beginAtZero:true}}, plugins:{legend:{display:false}} } });
+
+function formatTime(ts){ try{ return new Date(ts).toLocaleTimeString(); }catch{ return '--'; } }
+
+onValue(ref(db,'vayuveer/latest'), snap=>{
+  const data=snap.val();
+  if(!data){ppmValue.textContent='-- PPM';return;}
+  const ppm=parseFloat(data.ppm||0);
+  ppmValue.textContent=ppm.toFixed(1)+' PPM';
+  statusBadge.textContent=data.status||'Unknown';
+  lastTime.textContent=formatTime(data.timestamp||Date.now());
+  systemStatus.textContent=(data.status||'').includes('LEAK')?'ALERT':'System Active';
+  statusBadge.style.color=(data.status||'').includes('SAFE')?'var(--safe)':'var(--danger)';
+  chart.data.labels.push('');
+  chart.data.datasets[0].data.push(ppm);
+  if(chart.data.labels.length>30){chart.data.labels.shift();chart.data.datasets[0].data.shift();}
+  chart.update();
+});
+
+onValue(ref(db,'vayuveer/config/threshold'), s=>{
+  const v=s.val(); currentThresholdEl.textContent=v??'--'; thresholdInput.value=v??'';
+});
+updateThresholdBtn.onclick=async()=>{
+  const val=parseInt(thresholdInput.value);
+  if(!val||val<=0){alert('Enter valid number');return;}
+  await set(ref(db,'vayuveer/config/threshold'),val);
+  alert('Updated threshold: '+val);
+};
+</script>
+</body>
+</html>
