@@ -1,4 +1,4 @@
-# 🌬️ VāyuVeer – IoT Based Gas Detection & Alert System
+# 🌬️ VayuVeer – IoT Based Gas Detection & Alert System
 <img width="500" height="500" alt="ChatGPT Image Oct 28, 2025, 06_34_20 PM" src="https://github.com/user-attachments/assets/91850497-7b9e-46fd-8d45-755341dc948c" />
 
 
