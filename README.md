@@ -29,7 +29,7 @@
 ---
 
 ## 🔌 Circuit Diagram
-![Circuit Diagram](hardware/circuit_diagram.png)
+![Circuit Diagram](https://i.postimg.cc/SR0NtT1X/image.png)
 
 ---
 
